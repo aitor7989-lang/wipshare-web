@@ -5,6 +5,8 @@ import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useRe
 type Props = {
   src: string;
   poster?: string | undefined;
+  width?: number | undefined;
+  height?: number | undefined;
 };
 
 function fmt(s: number): string {
@@ -17,10 +19,12 @@ function fmt(s: number): string {
 /**
  * Styled player over a native <video>, driven via the media element API.
  * Keyboard: Space (play/pause), ←/→ (seek ∓2s), M (mute), F (fullscreen).
- * The scrubber shows played + buffered ranges. The 16:9 box is reserved up
- * front (no layout shift); a calm placeholder shows until loadedmetadata.
+ * The scrubber shows played + buffered ranges. The box is reserved at the clip's
+ * real aspect ratio (no layout shift, no 16:9 letterboxing); a calm placeholder
+ * shows until loadedmetadata.
  */
-export function VideoPlayer({ src, poster }: Props) {
+export function VideoPlayer({ src, poster, width, height }: Props) {
+  const aspect = width && height && width > 0 && height > 0 ? `${width} / ${height}` : undefined;
   const videoRef = useRef<HTMLVideoElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const scrubberRef = useRef<HTMLDivElement>(null);
@@ -147,10 +151,13 @@ export function VideoPlayer({ src, poster }: Props) {
       tabIndex={0}
       onKeyDown={onKeyDown}
     >
-      <div className="relative aspect-video w-full overflow-hidden rounded-[7px] border border-hairline bg-black">
+      <div
+        className={`relative w-full overflow-hidden rounded-[7px] border border-hairline bg-black${aspect ? '' : ' aspect-video'}`}
+        style={aspect ? { aspectRatio: aspect, maxHeight: '80vh' } : undefined}
+      >
         <video
           ref={videoRef}
-          className="block h-full w-full"
+          className="block h-full w-full object-contain"
           preload="metadata"
           playsInline
           poster={poster}

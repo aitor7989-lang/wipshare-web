@@ -177,7 +177,12 @@ export default async function ClipViewerPage({ params }: Props) {
               )}
             </div>
 
-            <VideoPlayer src={streamUrl} poster={posterUrl} />
+            <VideoPlayer
+              src={streamUrl}
+              poster={posterUrl}
+              width={clip.width ?? undefined}
+              height={clip.height ?? undefined}
+            />
 
             {/* title + meta */}
             <div className="mt-1 flex flex-col gap-3">
