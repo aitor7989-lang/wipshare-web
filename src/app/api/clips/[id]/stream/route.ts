@@ -28,10 +28,10 @@ export async function GET(
     return new Response('Not Found', { status: 404 });
   }
 
-  let row: { r2Key: string; status: string } | undefined;
+  let row: { r2Key: string; status: string; expiresAt: Date | null } | undefined;
   try {
     const rows = await db
-      .select({ r2Key: clips.r2Key, status: clips.status })
+      .select({ r2Key: clips.r2Key, status: clips.status, expiresAt: clips.expiresAt })
       .from(clips)
       .where(eq(clips.id, id))
       .limit(1);
@@ -43,6 +43,11 @@ export async function GET(
 
   if (!row || row.status !== 'ready') {
     return new Response('Not Found', { status: 404 });
+  }
+  // Lazy expiry: a clip past its expires_at is gone, even before the R2
+  // lifecycle rule sweeps the object.
+  if (row.expiresAt !== null && row.expiresAt.getTime() <= Date.now()) {
+    return new Response('Gone', { status: 410 });
   }
 
   let url: string;

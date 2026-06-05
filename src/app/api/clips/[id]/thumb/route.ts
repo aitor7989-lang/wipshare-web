@@ -25,10 +25,10 @@ export async function GET(
     return new Response('Not Found', { status: 404 });
   }
 
-  let row: { thumbR2Key: string | null; status: string } | undefined;
+  let row: { thumbR2Key: string | null; status: string; expiresAt: Date | null } | undefined;
   try {
     const rows = await db
-      .select({ thumbR2Key: clips.thumbR2Key, status: clips.status })
+      .select({ thumbR2Key: clips.thumbR2Key, status: clips.status, expiresAt: clips.expiresAt })
       .from(clips)
       .where(eq(clips.id, id))
       .limit(1);
@@ -40,6 +40,10 @@ export async function GET(
 
   if (!row || row.status !== 'ready' || row.thumbR2Key === null) {
     return new Response('Not Found', { status: 404 });
+  }
+  // Lazy expiry: stop serving a poster once the clip is past expires_at.
+  if (row.expiresAt !== null && row.expiresAt.getTime() <= Date.now()) {
+    return new Response('Gone', { status: 410 });
   }
 
   const obj = await getObjectBytes(row.thumbR2Key);
