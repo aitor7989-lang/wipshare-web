@@ -8,13 +8,14 @@
   --color-bg: #08090a;
   --color-surface: #0f1011;
   --color-surface-2: #16171a;
+  --color-surface-3: #1d1e22;
   --color-hairline: rgba(255, 255, 255, 0.08);
   --color-hairline-strong: rgba(255, 255, 255, 0.14);
 
   /* text */
   --color-fg: #f7f8f8;
   --color-fg-2: #8a8f98;
-  --color-fg-3: #62666d;
+  --color-fg-3: #787c85;
   /* kept for the landing / not-found pages that predate the token rename */
   --color-muted: #8a8f98;
 
@@ -38,4 +39,18 @@ body {
   background-color: var(--color-bg);
   color: var(--color-fg);
   font-feature-settings: "cv11", "ss01";
+}
+
+/* Honor the OS "reduce motion" setting: decorative animation/transitions
+ * collapse to near-instant. JS-driven progress (upload/recording bars) still
+ * updates the DOM — it just isn't eased. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
