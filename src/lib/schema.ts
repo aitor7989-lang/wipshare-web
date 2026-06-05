@@ -16,6 +16,10 @@ export const clips = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     status: text('status').notNull().default('pending').$type<ClipStatus>(),
     mime: text('mime').notNull().default('video/mp4'),
+    // Display name (the uploaded filename without extension), owner-renameable.
+    // Nullable so pre-title rows and filename-less uploads stay valid; the UI
+    // falls back to a date-derived label when null.
+    title: text('title'),
     // mode:'number' is fine here: our max-allowed size is ~500 MB, well below
     // Number.MAX_SAFE_INTEGER (9 PB). If we ever store larger clips, switch to
     // mode:'bigint' and propagate bigint through the stack.

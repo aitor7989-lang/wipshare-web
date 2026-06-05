@@ -28,7 +28,19 @@ const initiateSchema = z.object({
   // Phase 2C groundwork: opaque per-device owner token (a client GUID). Bounded
   // to keep the column small; never used for auth, only association.
   owner_token: z.string().min(1).max(100).optional(),
+  // Optional display name (the mp4 filename). Stored as the clip title without
+  // extension; the owner can rename it later.
+  filename: z.string().min(1).max(260).optional(),
 });
+
+/** The clip's default title: the uploaded filename, sans any path and extension. */
+function clipTitleFromFilename(filename: string | undefined): string | null {
+  if (filename === undefined) return null;
+  const base = filename.split(/[\\/]/).pop() ?? filename; // strip any directory
+  const noExt = base.replace(/\.[^.]+$/, ''); // strip the last extension
+  const trimmed = noExt.trim().slice(0, 200);
+  return trimmed.length > 0 ? trimmed : null;
+}
 
 // Every clip auto-expires one week after upload.
 const CLIP_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -74,6 +86,7 @@ export async function POST(req: Request): Promise<Response> {
       mime: parsed.data.mime,
       sizeBytes: parsed.data.size_bytes,
       status: 'pending',
+      title: clipTitleFromFilename(parsed.data.filename),
       width: parsed.data.width ?? null,
       height: parsed.data.height ?? null,
       thumbR2Key,
