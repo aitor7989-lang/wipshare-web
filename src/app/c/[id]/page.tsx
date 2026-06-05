@@ -7,8 +7,15 @@ import { db } from '@/lib/db';
 import { clips, type Clip } from '@/lib/schema';
 import { env } from '@/lib/env';
 import { isValidClipId } from '@/lib/ids';
+import { getOwnerToken } from '@/lib/identity';
+import { clipDisplayTitle, formatBytes, formatRelative, expiryInfo } from '@/lib/clip-format';
 import { VideoPlayer } from '@/components/VideoPlayer';
+import { SiteFrame } from '@/components/SiteFrame';
+import { Unavailable } from '@/components/Unavailable';
 import { CopyLinkCard } from '@/components/CopyLinkCard';
+import { CopyLinkButton } from '@/components/CopyLinkButton';
+import { ClipTitleEditable } from '@/components/ClipTitleEditable';
+import { DeleteClipControl } from '@/components/DeleteClipControl';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -27,6 +34,10 @@ const loadClip = cache(async (id: string): Promise<Clip | undefined> => {
   }
 });
 
+function isExpired(clip: Clip): boolean {
+  return clip.expiresAt !== null && clip.expiresAt.getTime() <= Date.now();
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const base = env.NEXT_PUBLIC_BASE_URL;
@@ -35,7 +46,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = 'A screen clip shared via WipShare';
 
   const clip = await loadClip(id);
-  const hasThumb = clip?.status === 'ready' && clip.thumbR2Key !== null;
+  const live = clip?.status === 'ready' && !isExpired(clip);
+  const title = live ? clipDisplayTitle(clip.title, clip.createdAt) : 'WipShare clip';
+  const hasThumb = live && clip.thumbR2Key !== null;
   const w = clip?.width ?? undefined;
   const h = clip?.height ?? undefined;
 
@@ -46,12 +59,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const imageH = hasThumb ? h : 630;
 
   return {
-    title: 'WipShare clip',
+    title: `${title} — WipShare`,
     description,
     openGraph: {
       type: 'video.other',
       url: pageUrl,
-      title: 'WipShare clip',
+      title,
       description,
       videos: [
         {
@@ -71,64 +84,46 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'WipShare clip',
+      title,
       description,
       images: [imageUrl],
     },
   };
 }
 
-function formatBytes(bytes: number): string {
-  const mb = bytes / (1024 * 1024);
-  return `${mb.toFixed(1)} MB`;
-}
+const downloadPill =
+  'inline-flex h-8 items-center gap-2 rounded-full border border-accent bg-accent px-4 text-[13px] font-medium text-white transition-colors hover:border-accent-hi hover:bg-accent-hi';
 
-function formatRelative(date: Date): string {
-  const diff = Date.now() - date.getTime();
-  const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-  const days = Math.floor(hours / 24);
-  return `${days} day${days === 1 ? '' : 's'} ago`;
-}
-
-/** Coarse expiry label (days; switches to hours + amber under 24h). */
-function expiryInfo(expiresAt: Date | null): { label: string; soon: boolean } | null {
-  if (!expiresAt) return null;
-  const ms = expiresAt.getTime() - Date.now();
-  if (ms <= 0) return { label: 'expired', soon: true };
-  const dayMs = 86_400_000;
-  if (ms < dayMs) {
-    const hours = Math.max(1, Math.ceil(ms / 3_600_000));
-    return { label: `expires in ${hours} hour${hours === 1 ? '' : 's'}`, soon: true };
-  }
-  const days = Math.ceil(ms / dayMs);
-  return { label: `expires in ${days} day${days === 1 ? '' : 's'}`, soon: false };
-}
-
-/** A friendly filename-style default title (we don't store an original name). */
-function buildTitle(createdAt: Date): string {
-  const y = createdAt.getFullYear();
-  const m = (createdAt.getMonth() + 1).toString().padStart(2, '0');
-  const d = createdAt.getDate().toString().padStart(2, '0');
-  return `wipshare-${y}-${m}-${d}`;
-}
+const downloadIcon = (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[13px] w-[13px]" aria-hidden>
+    <path d="M8 2v8" />
+    <path d="M4.5 7.5L8 11l3.5-3.5" />
+    <path d="M3 13h10" />
+  </svg>
+);
 
 export default async function ClipViewerPage({ params }: Props) {
   const { id } = await params;
   const clip = await loadClip(id);
-  if (!clip || clip.status !== 'ready') {
-    notFound();
+  if (!clip || clip.status !== 'ready') notFound();
+
+  // Lazy expiry: a past-expires_at clip renders the calm unavailable state.
+  if (isExpired(clip)) {
+    return <Unavailable />;
   }
+
+  // Ownership decided server-side from the signed cookie — owner-only controls
+  // never reach a non-owner.
+  const owner = await getOwnerToken();
+  const isOwner = clip.ownerToken !== null && owner !== null && owner === clip.ownerToken;
 
   const base = env.NEXT_PUBLIC_BASE_URL;
   const shareUrl = `${base}/c/${id}`;
   const shareDisplay = shareUrl.replace(/^https?:\/\//, '');
   const streamUrl = `/api/clips/${id}/stream`;
+  const downloadUrl = `/api/clips/${id}/download`;
   const posterUrl = clip.thumbR2Key !== null ? `/api/clips/${id}/thumb` : undefined;
-  const title = buildTitle(clip.createdAt);
+  const title = clipDisplayTitle(clip.title, clip.createdAt);
   const expiry = expiryInfo(clip.expiresAt ?? null);
 
   const meta: { k: string; v: string }[] = [];
@@ -137,57 +132,67 @@ export default async function ClipViewerPage({ params }: Props) {
   if (clip.durationSeconds !== null) meta.push({ k: 'dur', v: `${clip.durationSeconds}s` });
   meta.push({ k: 'type', v: clip.mime });
 
+  const headerRight = isOwner ? (
+    <Link
+      href="/me"
+      className="inline-flex h-[30px] items-center gap-2 rounded-full border border-hairline bg-surface py-0 pl-2 pr-2.5 text-[13px] font-medium text-fg-2 transition-colors hover:border-hairline-strong hover:text-fg"
+    >
+      <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border border-hairline bg-surface-2" aria-hidden>
+        <svg viewBox="0 0 12 12" fill="none" className="h-3 w-3">
+          <rect x="1" y="1" width="4" height="4" rx="1" fill="var(--color-fg-3)" />
+          <rect x="7" y="1" width="4" height="4" rx="1" fill="var(--color-fg-2)" />
+          <rect x="1" y="7" width="4" height="4" rx="1" fill="var(--color-fg-2)" />
+          <rect x="7" y="7" width="4" height="4" rx="1" fill="var(--color-fg-3)" />
+        </svg>
+      </span>
+      Your clips
+    </Link>
+  ) : (
+    <span className="inline-flex items-center gap-[7px] font-mono text-xs text-fg-3">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[13px] w-[13px] opacity-80" aria-hidden>
+        <path d="M5.5 8.5l5-3M5.5 7.5l5 3" />
+        <circle cx="4" cy="8" r="2" />
+        <circle cx="12" cy="4.5" r="2" />
+        <circle cx="12" cy="11.5" r="2" />
+      </svg>
+      shared with you
+    </span>
+  );
+
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
-      {/* grey corner-origin wash */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: 'radial-gradient(1100px 800px at 100% 0%, rgba(255,255,255,0.05), rgba(255,255,255,0) 70%)' }}
-        aria-hidden
-      />
+    <SiteFrame headerRight={headerRight} footer={!isOwner}>
+      <main className="flex flex-1 flex-col items-center px-6 pb-8 pt-14">
+        <div className="flex w-full max-w-[1080px] flex-col gap-5">
+          {/* crumbs */}
+          <div className="flex flex-wrap items-center gap-2 font-mono text-xs text-fg-3">
+            <span className="rounded border border-hairline bg-surface px-1.5 py-0.5 text-fg-2">c / {id}</span>
+            <span className="opacity-60">·</span>
+            <span>shared {formatRelative(clip.createdAt)}</span>
+            {expiry ? (
+              <>
+                <span className="opacity-60">·</span>
+                <span className={`inline-flex items-center gap-1.5 ${expiry.soon ? 'text-warn' : 'text-fg-3'}`}>
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 opacity-70" aria-hidden>
+                    <circle cx="8" cy="8" r="6" />
+                    <path d="M8 5v3l2 1.5" />
+                  </svg>
+                  {expiry.label}
+                </span>
+              </>
+            ) : null}
+          </div>
 
-      <div className="relative z-[2] flex min-h-screen flex-col">
-        <header className="flex items-center justify-between border-b border-hairline px-6 py-[18px]">
-          <Link href="/" className="inline-flex items-center gap-[9px] text-base font-medium tracking-tight text-fg" aria-label="WipShare home">
-            <span className="relative inline-block h-[22px] w-[22px] rounded-md bg-accent">
-              <span className="absolute right-[5px] top-[5px] h-[7px] w-[7px] rounded-full bg-bg" />
-            </span>
-            <span>wipshare</span>
-          </Link>
-        </header>
+          <VideoPlayer src={streamUrl} poster={posterUrl} width={clip.width ?? undefined} height={clip.height ?? undefined} />
 
-        <main className="flex flex-1 flex-col items-center px-6 pb-8 pt-14">
-          <div className="flex w-full max-w-[1080px] flex-col gap-5">
-            {/* crumbs */}
-            <div className="flex flex-wrap items-center gap-2 font-mono text-xs text-fg-3">
-              <span className="rounded border border-hairline bg-surface px-1.5 py-0.5 text-fg-2">c / {id}</span>
-              <span className="opacity-60">·</span>
-              <span>shared {formatRelative(clip.createdAt)}</span>
-              {expiry && (
-                <>
-                  <span className="opacity-60">·</span>
-                  <span className={`inline-flex items-center gap-1.5 ${expiry.soon ? 'text-warn' : 'text-fg-3'}`}>
-                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 opacity-70" aria-hidden>
-                      <circle cx="8" cy="8" r="6" />
-                      <path d="M8 5v3l2 1.5" />
-                    </svg>
-                    {expiry.label}
-                  </span>
-                </>
+          {/* title + meta + actions */}
+          <div className="mt-1 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+            <div className="min-w-0">
+              {isOwner ? (
+                <ClipTitleEditable clipId={id} initialTitle={title} />
+              ) : (
+                <h1 className="text-[22px] font-medium leading-tight tracking-[-0.02em] text-fg">{title}</h1>
               )}
-            </div>
-
-            <VideoPlayer
-              src={streamUrl}
-              poster={posterUrl}
-              width={clip.width ?? undefined}
-              height={clip.height ?? undefined}
-            />
-
-            {/* title + meta */}
-            <div className="mt-1 flex flex-col gap-3">
-              <h1 className="text-[22px] font-medium leading-tight tracking-tight text-fg">{title}</h1>
-              <div className="flex flex-wrap items-center tabular-nums text-[13px] text-fg-2">
+              <div className="mt-2.5 flex flex-wrap items-center tabular-nums text-[13px] text-fg-2">
                 {meta.map((m, i) => (
                   <span
                     key={m.k}
@@ -200,10 +205,23 @@ export default async function ClipViewerPage({ params }: Props) {
               </div>
             </div>
 
-            <CopyLinkCard url={shareUrl} display={shareDisplay} />
+            <div className="flex items-center gap-2">
+              {isOwner ? (
+                <DeleteClipControl clipId={id} title={title} />
+              ) : (
+                <CopyLinkButton url={shareUrl} />
+              )}
+              <a href={downloadUrl} download className={downloadPill}>
+                {downloadIcon}
+                Download
+              </a>
+            </div>
           </div>
-        </main>
-      </div>
-    </div>
+
+          {/* owner: the click-to-copy URL card (visitors copy via the button above) */}
+          {isOwner ? <CopyLinkCard url={shareUrl} display={shareDisplay} /> : null}
+        </div>
+      </main>
+    </SiteFrame>
   );
 }

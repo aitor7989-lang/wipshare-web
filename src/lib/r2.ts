@@ -48,6 +48,24 @@ export async function presignGet(key: string): Promise<string> {
 }
 
 /**
+ * Presigned GET that forces a download with a chosen filename. The
+ * Content-Disposition is baked into the signed URL (R2 honors the
+ * response-content-disposition override), so the cross-origin redirect from
+ * /download still names the saved file — the plain HTML `download` attribute
+ * can't, since the object lives on another origin. `filename` must already be
+ * sanitized to a safe ASCII value (no quotes / control chars).
+ */
+export async function presignGetDownload(key: string, filename: string): Promise<string> {
+  const cmd = new GetObjectCommand({
+    Bucket: env.R2_BUCKET_NAME,
+    Key: key,
+    ResponseContentDisposition: `attachment; filename="${filename}"`,
+    ResponseContentType: 'video/mp4',
+  });
+  return getSignedUrl(r2, cmd, { expiresIn: GET_TTL_SECONDS });
+}
+
+/**
  * Deletes an R2 object. S3/R2 deletes are idempotent — removing a key that's
  * already gone returns success — so callers can re-run delete safely.
  */
