@@ -1,4 +1,5 @@
 import {
+  DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -44,6 +45,14 @@ export async function presignGet(key: string): Promise<string> {
     Key: key,
   });
   return getSignedUrl(r2, cmd, { expiresIn: GET_TTL_SECONDS });
+}
+
+/**
+ * Deletes an R2 object. S3/R2 deletes are idempotent — removing a key that's
+ * already gone returns success — so callers can re-run delete safely.
+ */
+export async function deleteObject(key: string): Promise<void> {
+  await r2.send(new DeleteObjectCommand({ Bucket: env.R2_BUCKET_NAME, Key: key }));
 }
 
 export type HeadResult = { contentLength: number };
