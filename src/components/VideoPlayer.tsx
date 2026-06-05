@@ -54,6 +54,21 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
     const onPause = () => setPlaying(false);
     const onVolume = () => setMuted(v.muted);
 
+    // Auto-play once the clip is buffered enough to play through. Browsers block
+    // autoplay *with sound* without a prior user gesture, so attempt sound first
+    // and fall back to muted (always permitted) — the user can unmute. Runs once.
+    let autoplayed = false;
+    const tryAutoplay = () => {
+      if (autoplayed) return;
+      autoplayed = true;
+      void v.play().catch(() => {
+        v.muted = true;
+        void v.play().catch(() => {
+          // Still blocked — leave it paused; the Play button works.
+        });
+      });
+    };
+
     v.addEventListener('timeupdate', onTime);
     v.addEventListener('progress', onTime);
     v.addEventListener('loadedmetadata', onMeta);
@@ -61,6 +76,13 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
     v.addEventListener('play', onPlay);
     v.addEventListener('pause', onPause);
     v.addEventListener('volumechange', onVolume);
+    v.addEventListener('canplay', tryAutoplay);
+    v.addEventListener('canplaythrough', tryAutoplay);
+
+    // If the clip was already buffered before this effect attached (cache/fast
+    // network), the canplay event may have fired already — kick it off directly.
+    if (v.readyState >= 3) tryAutoplay();
+
     return () => {
       v.removeEventListener('timeupdate', onTime);
       v.removeEventListener('progress', onTime);
@@ -69,6 +91,8 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
       v.removeEventListener('play', onPlay);
       v.removeEventListener('pause', onPause);
       v.removeEventListener('volumechange', onVolume);
+      v.removeEventListener('canplay', tryAutoplay);
+      v.removeEventListener('canplaythrough', tryAutoplay);
     };
   }, []);
 
@@ -158,7 +182,7 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
         <video
           ref={videoRef}
           className="block h-full w-full object-contain"
-          preload="metadata"
+          preload="auto"
           playsInline
           poster={poster}
           onClick={togglePlay}
