@@ -1,64 +1,37 @@
-import { and, desc, eq, gt } from 'drizzle-orm';
-import { db } from '@/lib/db';
-import { clips } from '@/lib/schema';
 import { ok, err } from '@/lib/api-response';
 import { getOwnerToken } from '@/lib/identity';
+import { listOwnerClips } from '@/lib/clip-queries';
 
 export const runtime = 'nodejs';
+
+const NO_STORE = { headers: { 'Cache-Control': 'private, no-store' } } as const;
 
 /**
  * GET /api/me/clips
  *
- * The signed-in device's library: this owner's clips that are ready and not yet
- * expired, newest first. Scope comes ONLY from the signed wip_uid cookie (via
- * getOwnerToken) — never from a query param — so it can't be spoofed. No cookie
- * → an empty list (a fresh, cookieless browser sees the empty state).
+ * The signed-in device's library: this owner's ready, non-expired clips, newest
+ * first. Scope comes ONLY from the signed wip_uid cookie (via getOwnerToken),
+ * never from a query param. No cookie → an empty list.
  */
 export async function GET(): Promise<Response> {
   const owner = await getOwnerToken();
-  if (owner === null) return ok({ clips: [] }, { headers: { 'Cache-Control': 'private, no-store' } });
+  if (owner === null) return ok({ clips: [] }, NO_STORE);
 
-  let rows;
   try {
-    rows = await db
-      .select({
-        id: clips.id,
-        title: clips.title,
-        createdAt: clips.createdAt,
-        expiresAt: clips.expiresAt,
-        width: clips.width,
-        height: clips.height,
-        thumbR2Key: clips.thumbR2Key,
-      })
-      .from(clips)
-      .where(
-        and(
-          eq(clips.ownerToken, owner),
-          eq(clips.status, 'ready'),
-          gt(clips.expiresAt, new Date()), // excludes expired (and null-expiry) rows
-        ),
-      )
-      .orderBy(desc(clips.createdAt))
-      .limit(200);
+    const rows = await listOwnerClips(owner);
+    const data = rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      createdAt: r.createdAt.toISOString(),
+      expiresAt: r.expiresAt?.toISOString() ?? null,
+      width: r.width,
+      height: r.height,
+      thumbUrl: r.thumbR2Key ? `/api/clips/${r.id}/thumb` : null,
+      viewerUrl: `/c/${r.id}`,
+    }));
+    return ok({ clips: data }, NO_STORE);
   } catch (e) {
-    console.error('[me/clips] db select failed err=%s', errorMessage(e));
+    console.error('[me/clips] db select failed err=%s', e instanceof Error ? e.message : String(e));
     return err('db_error', 'failed to load clips', 500);
   }
-
-  const data = rows.map((r) => ({
-    id: r.id,
-    title: r.title,
-    createdAt: r.createdAt.toISOString(),
-    expiresAt: r.expiresAt?.toISOString() ?? null,
-    width: r.width,
-    height: r.height,
-    thumbUrl: r.thumbR2Key ? `/api/clips/${r.id}/thumb` : null,
-    viewerUrl: `/c/${r.id}`,
-  }));
-
-  return ok({ clips: data }, { headers: { 'Cache-Control': 'private, no-store' } });
-}
-
-function errorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
 }
