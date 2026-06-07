@@ -1,19 +1,30 @@
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { clips } from '@/lib/schema';
+import { clips, type ClipVisibility } from '@/lib/schema';
 import { ok, err } from '@/lib/api-response';
 import { getOwnerToken } from '@/lib/identity';
 import { isValidClipId } from '@/lib/ids';
 import { deleteObject } from '@/lib/r2';
+import { hashPassword } from '@/lib/password';
 
 export const runtime = 'nodejs';
 
 type Params = { id: string };
 
-const patchSchema = z.object({
-  title: z.string().trim().min(1, 'title is required').max(200, 'title is too long'),
-});
+// Every field optional; at least one must be present. `title` renames;
+// `visibility` flips public/private; `password` sets (non-empty) or clears
+// ('' | null) the view password. Private supersedes — a private clip never
+// carries a password (the UI disables the password control when private).
+const patchSchema = z
+  .object({
+    title: z.string().trim().min(1, 'title is required').max(200, 'title is too long').optional(),
+    visibility: z.enum(['public', 'private']).optional(),
+    password: z.string().max(200, 'password is too long').nullable().optional(),
+  })
+  .refine((v) => v.title !== undefined || v.visibility !== undefined || v.password !== undefined, {
+    message: 'nothing to update',
+  });
 
 /**
  * True when the verified wip_uid cookie owns this clip. Ownership is decided
@@ -25,7 +36,7 @@ async function isOwner(clipOwnerToken: string | null): Promise<boolean> {
   return owner !== null && owner === clipOwnerToken;
 }
 
-/** PATCH /api/clips/[id] — owner-only rename. */
+/** PATCH /api/clips/[id] — owner-only rename and/or visibility + password. */
 export async function PATCH(req: Request, { params }: { params: Promise<Params> }): Promise<Response> {
   const { id } = await params;
   if (!isValidClipId(id)) return err('not_found', 'clip not found', 404);
@@ -41,10 +52,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
     return err('invalid_request', parsed.error.issues.map((i) => i.message).join('; '), 400);
   }
 
-  let row: { ownerToken: string | null } | undefined;
+  let row:
+    | { ownerToken: string | null; title: string | null; visibility: ClipVisibility; passwordHash: string | null }
+    | undefined;
   try {
     const rows = await db
-      .select({ ownerToken: clips.ownerToken })
+      .select({
+        ownerToken: clips.ownerToken,
+        title: clips.title,
+        visibility: clips.visibility,
+        passwordHash: clips.passwordHash,
+      })
       .from(clips)
       .where(eq(clips.id, id))
       .limit(1);
@@ -57,18 +75,54 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
   if (!row) return err('not_found', 'clip not found', 404);
   if (!(await isOwner(row.ownerToken))) return err('forbidden', 'not your clip', 403);
 
-  // Store the title without the clip's extension; the download re-appends ".mp4".
-  const title = parsed.data.title.replace(/\.mp4$/i, '').trim().slice(0, 200);
-  if (title.length === 0) return err('invalid_request', 'title cannot be empty', 400);
+  const updates: Partial<{ title: string; visibility: ClipVisibility; passwordHash: string | null }> = {};
 
-  try {
-    await db.update(clips).set({ title }).where(eq(clips.id, id));
-  } catch (e) {
-    console.error('[clips PATCH] db update failed id=%s err=%s', id, errorMessage(e));
-    return err('db_error', 'failed to rename clip', 500);
+  if (parsed.data.title !== undefined) {
+    // Store the title without the clip's extension; the download re-appends ".mp4".
+    const title = parsed.data.title.replace(/\.mp4$/i, '').trim().slice(0, 200);
+    if (title.length === 0) return err('invalid_request', 'title cannot be empty', 400);
+    updates.title = title;
   }
 
-  return ok({ id, title });
+  if (parsed.data.visibility !== undefined) updates.visibility = parsed.data.visibility;
+
+  // The visibility this clip will have once the patch lands.
+  const nextVisibility: ClipVisibility = parsed.data.visibility ?? row.visibility;
+
+  if (nextVisibility === 'private') {
+    // Private supersedes: never keep a password on a private clip. Only write
+    // when flipping to private or there's actually a password to drop.
+    if (parsed.data.visibility === 'private' || row.passwordHash !== null) updates.passwordHash = null;
+  } else if (parsed.data.password !== undefined) {
+    // Public + password field present → set (non-empty) or clear ('' | null).
+    const pw = parsed.data.password ?? '';
+    updates.passwordHash = pw.length > 0 ? hashPassword(pw) : null;
+  }
+
+  if (Object.keys(updates).length > 0) {
+    try {
+      await db.update(clips).set(updates).where(eq(clips.id, id));
+    } catch (e) {
+      console.error('[clips PATCH] db update failed id=%s err=%s', id, errorMessage(e));
+      return err('db_error', 'failed to update clip', 500);
+    }
+  }
+
+  // Echo the resolved state so the client can reconcile its optimistic update.
+  // Never return password_hash — only whether one is set.
+  const finalHasPassword =
+    nextVisibility === 'public'
+      ? updates.passwordHash !== undefined
+        ? updates.passwordHash !== null
+        : row.passwordHash !== null
+      : false;
+
+  return ok({
+    id,
+    title: updates.title ?? row.title,
+    visibility: nextVisibility,
+    hasPassword: finalHasPassword,
+  });
 }
 
 /** DELETE /api/clips/[id] — owner-only. Removes the R2 mp4 + thumb and the row. */
