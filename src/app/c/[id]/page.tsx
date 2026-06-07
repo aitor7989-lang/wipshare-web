@@ -17,6 +17,7 @@ import { CopyLinkButton } from '@/components/CopyLinkButton';
 import { ClipTitleEditable } from '@/components/ClipTitleEditable';
 import { DeleteClipControl } from '@/components/DeleteClipControl';
 import { PasswordGate } from '@/components/PasswordGate';
+import { ShareControls } from '@/components/ShareControls';
 import { hasViewGrant } from '@/lib/view-grant';
 
 type Props = {
@@ -153,20 +154,29 @@ export default async function ClipViewerPage({ params }: Props) {
   meta.push({ k: 'type', v: clip.mime });
 
   const headerRight = isOwner ? (
-    <Link
-      href="/me"
-      className="inline-flex h-[30px] items-center gap-2 rounded-full border border-hairline bg-surface py-0 pl-2 pr-2.5 text-[13px] font-medium text-fg-2 transition-colors hover:border-hairline-strong hover:text-fg"
-    >
-      <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border border-hairline bg-surface-2" aria-hidden>
-        <svg viewBox="0 0 12 12" fill="none" className="h-3 w-3">
-          <rect x="1" y="1" width="4" height="4" rx="1" fill="var(--color-fg-3)" />
-          <rect x="7" y="1" width="4" height="4" rx="1" fill="var(--color-fg-2)" />
-          <rect x="1" y="7" width="4" height="4" rx="1" fill="var(--color-fg-2)" />
-          <rect x="7" y="7" width="4" height="4" rx="1" fill="var(--color-fg-3)" />
-        </svg>
-      </span>
-      Your clips
-    </Link>
+    <div className="flex items-center gap-3">
+      <Link
+        href="/me"
+        className="inline-flex h-[30px] items-center gap-2 rounded-full border border-hairline bg-surface py-0 pl-2 pr-2.5 text-[13px] font-medium text-fg-2 transition-colors hover:border-hairline-strong hover:text-fg"
+      >
+        <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border border-hairline bg-surface-2" aria-hidden>
+          <svg viewBox="0 0 12 12" fill="none" className="h-3 w-3">
+            <rect x="1" y="1" width="4" height="4" rx="1" fill="var(--color-fg-3)" />
+            <rect x="7" y="1" width="4" height="4" rx="1" fill="var(--color-fg-2)" />
+            <rect x="1" y="7" width="4" height="4" rx="1" fill="var(--color-fg-2)" />
+            <rect x="7" y="7" width="4" height="4" rx="1" fill="var(--color-fg-3)" />
+          </svg>
+        </span>
+        Your clips
+      </Link>
+      <ShareControls
+        clipId={id}
+        initialVisibility={clip.visibility}
+        initialHasPassword={clip.passwordHash !== null}
+        shareUrl={shareUrl}
+        expiryLabel={expiry?.label ?? null}
+      />
+    </div>
   ) : (
     <span className="inline-flex items-center gap-[7px] font-mono text-xs text-fg-3">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[13px] w-[13px] opacity-80" aria-hidden>
