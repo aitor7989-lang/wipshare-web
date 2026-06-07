@@ -9,6 +9,14 @@ import { sql } from 'drizzle-orm';
 export const clipStatuses = ['pending', 'ready', 'failed'] as const;
 export type ClipStatus = (typeof clipStatuses)[number];
 
+/**
+ * Per-clip access visibility. 'public' = anyone with the link (optionally gated
+ * by a password); 'private' = owner only. Mirrored as a TS union AND a SQL CHECK
+ * constraint so an out-of-band write can't introduce an unknown value.
+ */
+export const clipVisibilities = ['public', 'private'] as const;
+export type ClipVisibility = (typeof clipVisibilities)[number];
+
 export const clips = pgTable(
   'clips',
   {
@@ -36,9 +44,16 @@ export const clips = pgTable(
     // nullable so existing rows and non-owner-aware clients stay valid.
     ownerToken: text('owner_token'),
     expiresAt: timestamp('expires_at', { withTimezone: true }),
+    // Phase 7: per-clip privacy. `visibility` gates access ('public' = link, maybe
+    // password; 'private' = owner only). `password_hash` is `salt:hash` (hex,
+    // scrypt) and only meaningful while public; null = no password. The hash is
+    // never returned to a client or rendered into a page.
+    visibility: text('visibility').notNull().default('public').$type<ClipVisibility>(),
+    passwordHash: text('password_hash'),
   },
   (t) => [
     check('clips_status_check', sql`${t.status} IN ('pending', 'ready', 'failed')`),
+    check('clips_visibility_check', sql`${t.visibility} IN ('public', 'private')`),
   ],
 );
 
