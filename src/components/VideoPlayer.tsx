@@ -52,6 +52,7 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const scrubberRef = useRef<HTMLDivElement>(null);
+  const playedRef = useRef<HTMLDivElement>(null);
 
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -135,6 +136,26 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
     };
   }, []);
 
+  // Drive the played bar from requestAnimationFrame (reading currentTime each
+  // frame) rather than the ~4 Hz `timeupdate` event, so it advances smoothly at
+  // the display refresh rate instead of stepping every ~0.25-0.5s. Writes one
+  // style prop per frame; no React re-render.
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const v = videoRef.current;
+      const el = playedRef.current;
+      if (v && el) {
+        const d = v.duration;
+        const frac = Number.isFinite(d) && d > 0 ? Math.min(1, v.currentTime / d) : 0;
+        el.style.width = `${(frac * 100).toFixed(3)}%`;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -210,8 +231,6 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
     },
     [togglePlay, seekBy, toggleMute, toggleLoop, toggleFullscreen],
   );
-
-  const playedFrac = duration > 0 ? Math.min(1, current / duration) : 0;
 
   return (
     <section
@@ -314,8 +333,9 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
             style={{ width: `${bufferedFrac * 100}%`, background: 'rgba(255,255,255,0.10)' }}
           />
           <div
+            ref={playedRef}
             className="absolute inset-y-0 left-0 rounded-full bg-accent"
-            style={{ width: `${playedFrac * 100}%` }}
+            style={{ width: 0 }}
           />
         </div>
 
