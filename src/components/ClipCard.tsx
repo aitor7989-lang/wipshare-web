@@ -14,6 +14,8 @@ export type ClipCardData = {
   thumbUrl: string | null;
   footLabel: string;
   footSoon: boolean;
+  visibility: 'public' | 'private';
+  hasPassword: boolean;
 };
 
 const menuItem =
@@ -129,7 +131,8 @@ export function ClipCard({ clip }: { clip: ClipCardData }) {
             </svg>
           </button>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center justify-between gap-2">
+          <VisBadge visibility={clip.visibility} hasPassword={clip.hasPassword} />
           <span className={`font-mono text-[11px] tabular-nums ${clip.footSoon ? 'text-warn' : 'text-fg-3'}`}>{clip.footLabel}</span>
         </div>
       </div>
@@ -175,5 +178,22 @@ export function ClipCard({ clip }: { clip: ClipCardData }) {
         onConfirm={doDelete}
       />
     </div>
+  );
+}
+
+/** The visibility badge (me.html .vis): Public (green) / Private (grey) /
+ *  Password (accent). "Password" = a public clip with a password set. */
+function VisBadge({ visibility, hasPassword }: { visibility: 'public' | 'private'; hasPassword: boolean }) {
+  const kind = visibility === 'private' ? 'private' : hasPassword ? 'password' : 'public';
+  const cfg = {
+    public: { label: 'Public', text: 'text-[#7bd389]', dot: { background: 'var(--color-ok)', boxShadow: '0 0 0 3px rgba(63,185,80,0.14)' } },
+    private: { label: 'Private', text: 'text-fg-2', dot: { background: 'var(--color-fg-3)' } },
+    password: { label: 'Password', text: 'text-accent-hi', dot: { background: 'var(--color-accent)', boxShadow: '0 0 0 3px var(--color-accent-dim)' } },
+  }[kind];
+  return (
+    <span className={`-ml-0.5 inline-flex h-[22px] shrink-0 items-center gap-1.5 rounded-full border border-hairline bg-surface-2 pl-2 pr-[9px] text-[11.5px] font-medium ${cfg.text}`}>
+      <span className="h-1.5 w-1.5 rounded-full" style={cfg.dot} aria-hidden />
+      {cfg.label}
+    </span>
   );
 }

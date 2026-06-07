@@ -5,7 +5,8 @@ import { getOwnerToken } from '@/lib/identity';
 import { listOwnerClips } from '@/lib/clip-queries';
 import { clipDisplayTitle, formatRelative, expiryInfo } from '@/lib/clip-format';
 import { SiteFrame } from '@/components/SiteFrame';
-import { ClipCard, type ClipCardData } from '@/components/ClipCard';
+import { type ClipCardData } from '@/components/ClipCard';
+import { LibraryGrid } from '@/components/LibraryGrid';
 
 export const metadata: Metadata = {
   title: 'Your clips — WipShare',
@@ -46,6 +47,8 @@ export default async function MyClipsPage() {
       thumbUrl: r.thumbR2Key ? `/api/clips/${r.id}/thumb` : null,
       footLabel: soon && exp ? exp.label : formatRelative(r.createdAt),
       footSoon: soon,
+      visibility: r.visibility,
+      hasPassword: r.hasPassword,
     };
   });
 
@@ -103,11 +106,7 @@ export default async function MyClipsPage() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(264px,1fr))] gap-[18px]">
-            {cards.map((c) => (
-              <ClipCard key={c.id} clip={c} />
-            ))}
-          </div>
+          <LibraryGrid cards={cards} />
         )}
       </main>
     </SiteFrame>
