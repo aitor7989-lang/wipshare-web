@@ -135,7 +135,7 @@ export function ClipCard({ clip }: { clip: ClipCardData }) {
           ) : (
             <span
               className="block h-full w-full"
-              style={{ background: 'radial-gradient(72% 92% at 22% 28%, rgba(94,106,210,0.18), transparent 66%), linear-gradient(155deg, #15171e, #0a0b0e)' }}
+              style={{ background: 'radial-gradient(72% 92% at 22% 28%, rgba(255,255,255,0.06), transparent 66%), linear-gradient(155deg, #15171e, #0a0b0e)' }}
             />
           )}
         </Link>
@@ -145,8 +145,8 @@ export function ClipCard({ clip }: { clip: ClipCardData }) {
         >
           <Link
             href={clip.viewerUrl}
-            className="pointer-events-auto inline-flex h-8 items-center gap-1.5 rounded-md border border-accent bg-accent px-3 text-[13px] font-medium text-white transition-colors hover:border-accent-hi hover:bg-accent-hi"
-            style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)' }}
+            className="pointer-events-auto inline-flex h-8 items-center gap-1.5 rounded-md border border-transparent bg-[#e9eaed] px-3 text-[13px] font-medium text-[#0b0c0d] transition-colors hover:bg-white"
+            style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85), 0 1px 2px rgba(0,0,0,0.4)' }}
           >
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden>
               <path d="M3 8h10" />
@@ -306,7 +306,7 @@ function VisBadge({ visibility, hasPassword }: { visibility: 'public' | 'private
   const cfg = {
     public: { label: 'Public', text: 'text-[#7bd389]', dot: { background: 'var(--color-ok)', boxShadow: '0 0 0 3px rgba(63,185,80,0.14)' } },
     private: { label: 'Private', text: 'text-fg-2', dot: { background: 'var(--color-fg-3)' } },
-    password: { label: 'Password', text: 'text-accent-hi', dot: { background: 'var(--color-accent)', boxShadow: '0 0 0 3px var(--color-accent-dim)' } },
+    password: { label: 'Password', text: 'text-[#ab9eff]', dot: { background: 'var(--color-pw)', boxShadow: '0 0 0 3px var(--color-pw-dim)' } },
   }[kind];
   return (
     <span className={`-ml-0.5 inline-flex h-[22px] shrink-0 items-center gap-1.5 rounded-full border border-hairline bg-surface-2 pl-2 pr-[9px] text-[11.5px] font-medium ${cfg.text}`}>

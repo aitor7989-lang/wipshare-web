@@ -32,8 +32,8 @@ export function Unavailable({
             <p className="max-w-[34ch] text-sm leading-relaxed text-fg-3">{sub}</p>
             <Link
               href="/"
-              className="mt-5 inline-flex h-10 items-center gap-2 rounded-full border border-accent bg-accent px-[18px] text-sm font-medium text-white transition-colors hover:border-accent-hi hover:bg-accent-hi"
-              style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)' }}
+              className="mt-5 inline-flex h-10 items-center gap-2 rounded-full border border-transparent bg-[#e9eaed] px-[18px] text-sm font-medium text-[#0b0c0d] transition-colors hover:bg-white"
+              style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85), 0 1px 2px rgba(0,0,0,0.4)' }}
             >
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-[15px] w-[15px]" aria-hidden>
                 <path d="M2.5 5.5V3.5h2M11.5 3.5h2v2M13.5 10.5v2h-2M4.5 12.5h-2v-2" />

@@ -19,10 +19,15 @@
   /* kept for the landing / not-found pages that predate the token rename */
   --color-muted: #8a8f98;
 
-  /* accent + status */
-  --color-accent: #5e6ad2;
-  --color-accent-hi: #7a85e0;
-  --color-accent-dim: rgba(94, 106, 210, 0.14);
+  /* accent = neutral white (the brand "key colour" is white, not a hue) */
+  --color-accent: #f7f8f8;
+  --color-accent-hi: #ffffff;
+  --color-accent-dim: rgba(255, 255, 255, 0.14);
+  /* password identity (the one reserved hue, used for password badges/locks) */
+  --color-pw: #8b7ff5;
+  --color-pw-hi: #ab9eff;
+  --color-pw-dim: rgba(139, 127, 245, 0.16);
+  /* status */
   --color-ok: #3fb950;
   --color-warn: #d29922;
   --color-err: #e35d6a;

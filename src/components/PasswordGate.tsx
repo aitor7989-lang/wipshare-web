@@ -63,12 +63,12 @@ export function PasswordGate({ clipId }: Props) {
             style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 24px 60px rgba(0,0,0,0.4)' }}
           >
             <span
-              className="relative mb-3.5 inline-flex h-[52px] w-[52px] items-center justify-center rounded-[14px] border text-accent-hi"
-              style={{ background: 'var(--color-accent-dim)', borderColor: 'rgba(94,106,210,0.3)' }}
+              className="relative mb-3.5 inline-flex h-[52px] w-[52px] items-center justify-center rounded-[14px] border text-[#ab9eff]"
+              style={{ background: 'var(--color-pw-dim)', borderColor: 'rgba(139,127,245,0.35)' }}
             >
               <span
                 className="pointer-events-none absolute -inset-4 rounded-full"
-                style={{ background: 'radial-gradient(circle, var(--color-accent-dim), transparent 70%)' }}
+                style={{ background: 'radial-gradient(circle, var(--color-pw-dim), transparent 70%)' }}
                 aria-hidden
               />
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="relative h-6 w-6" aria-hidden>
@@ -116,8 +116,8 @@ export function PasswordGate({ clipId }: Props) {
               <button
                 type="submit"
                 disabled={busy}
-                className="h-11 w-full rounded-[9px] border border-accent bg-accent text-sm font-medium text-white transition-colors hover:border-accent-hi hover:bg-accent-hi disabled:opacity-70"
-                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)' }}
+                className="h-11 w-full rounded-[9px] border border-transparent bg-[#e9eaed] text-sm font-medium text-[#0b0c0d] transition-colors hover:bg-white disabled:opacity-70"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.85), 0 1px 2px rgba(0,0,0,0.4)' }}
               >
                 {busy ? 'Unlocking…' : 'Unlock clip'}
               </button>

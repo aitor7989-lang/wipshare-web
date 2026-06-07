@@ -158,7 +158,7 @@ export function ShareControls({ clipId, initialVisibility, initialHasPassword, s
     visibility === 'private'
       ? { background: 'var(--color-fg-3)' }
       : hasPassword
-        ? { background: 'var(--color-accent)', boxShadow: '0 0 0 3px var(--color-accent-dim)' }
+        ? { background: 'var(--color-pw)', boxShadow: '0 0 0 3px var(--color-pw-dim)' }
         : { background: 'var(--color-ok)', boxShadow: '0 0 0 3px rgba(63,185,80,0.14)' };
 
   const draftTrimmed = draft.trim();
@@ -247,10 +247,9 @@ export function ShareControls({ clipId, initialVisibility, initialHasPassword, s
                     type="button"
                     onClick={() => void commitPassword()}
                     disabled={!draftTrimmed || busy || justSaved}
-                    className={`h-8 shrink-0 rounded-md border px-3 text-xs font-medium text-white transition-colors disabled:cursor-default disabled:opacity-40 ${
-                      justSaved ? 'border-ok bg-ok' : 'border-accent bg-accent hover:border-accent-hi hover:bg-accent-hi'
+                    className={`h-8 shrink-0 rounded-md border px-3 text-xs font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_1px_2px_rgba(0,0,0,0.4)] transition-colors disabled:cursor-default disabled:opacity-40 ${
+                      justSaved ? 'border-transparent bg-ok text-white' : 'border-transparent bg-[#e9eaed] text-[#0b0c0d] hover:bg-white'
                     }`}
-                    style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)' }}
                   >
                     {justSaved || !hasPassword ? 'Set' : 'Update'}
                   </button>
@@ -308,7 +307,7 @@ function Toggle({
     >
       <span
         className={`absolute left-0.5 top-0.5 h-3 w-3 rounded-full transition-transform ${
-          on ? 'translate-x-3 bg-white' : 'bg-fg-2'
+          on ? 'translate-x-3 bg-[#0b0c0d]' : 'bg-fg-2'
         }`}
       />
     </button>

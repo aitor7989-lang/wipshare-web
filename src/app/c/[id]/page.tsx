@@ -95,7 +95,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const downloadPill =
-  'inline-flex h-8 items-center gap-2 rounded-full border border-accent bg-accent px-4 text-[13px] font-medium text-white transition-colors hover:border-accent-hi hover:bg-accent-hi';
+  'inline-flex h-8 items-center gap-2 rounded-full border border-transparent bg-[#e9eaed] px-4 text-[13px] font-medium text-[#0b0c0d] shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_1px_2px_rgba(0,0,0,0.4)] transition-colors hover:bg-white';
 
 const downloadIcon = (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[13px] w-[13px]" aria-hidden>

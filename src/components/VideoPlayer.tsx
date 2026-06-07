@@ -350,7 +350,7 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
             aria-label="Loop"
             aria-pressed={loop}
             title="Loop · L"
-            className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${loop ? 'bg-accent-dim text-accent-hi hover:bg-[rgba(94,106,210,0.22)]' : 'hover:bg-surface-2'}`}
+            className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${loop ? 'bg-accent-dim text-accent-hi hover:bg-[rgba(255,255,255,0.22)]' : 'hover:bg-surface-2'}`}
           >
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
               <path d="M4 5h6a3 3 0 0 1 3 3a3 3 0 0 1-.5 1.7" />
