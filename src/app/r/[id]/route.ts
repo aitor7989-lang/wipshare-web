@@ -11,7 +11,7 @@ export const runtime = 'nodejs';
  * to the owner_token, then 302-redirects to the clip viewer at /c/[id]. From then
  * on the browser is recognized as the owner and the clip shows up in /me.
  *
- * The owner_token travels in the query string here — acceptable for the alpha
+ * The owner_token travels in the query string here - acceptable for the alpha
  * (see lib/identity for the security model). The shared link copied to the
  * clipboard is always the plain /c/[id]; only the owner ever sees this bridge.
  *

@@ -10,9 +10,9 @@ import { env } from '@/lib/env';
 
 export const runtime = 'nodejs';
 
-const MAX_SIZE_BYTES = 524_288_000;  // 500 MiB — hard ceiling on the presigned PUT
-const MIN_SIZE_BYTES = 1024;         // 1 KiB — guards against pathological "0-byte" tests
-const MAX_THUMB_BYTES = 5_000_000;   // 5 MB — generous for a JPEG poster frame
+const MAX_SIZE_BYTES = 524_288_000;  // 500 MiB - hard ceiling on the presigned PUT
+const MIN_SIZE_BYTES = 1024;         // 1 KiB - guards against pathological "0-byte" tests
+const MAX_THUMB_BYTES = 5_000_000;   // 5 MB - generous for a JPEG poster frame
 
 const initiateSchema = z.object({
   size_bytes: z
@@ -21,7 +21,7 @@ const initiateSchema = z.object({
     .min(MIN_SIZE_BYTES, `size_bytes must be >= ${MIN_SIZE_BYTES}`)
     .max(MAX_SIZE_BYTES, `size_bytes must be <= ${MAX_SIZE_BYTES}`),
   mime: z.literal('video/mp4'),
-  // Phase 2B optional fields — clip pixel dimensions + poster thumbnail.
+  // Phase 2B optional fields - clip pixel dimensions + poster thumbnail.
   width: z.number().int().min(1).max(10_000).optional(),
   height: z.number().int().min(1).max(10_000).optional(),
   thumb_size_bytes: z.number().int().min(1).max(MAX_THUMB_BYTES).optional(),

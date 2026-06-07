@@ -17,7 +17,7 @@ export type LibraryClip = {
 /**
  * An owner's ready, non-expired clips, newest first. Shared by GET /api/me/clips
  * and the server-rendered /me page so both apply identical scoping. The clip's
- * password_hash is read only to derive `hasPassword` — the hash itself never
+ * password_hash is read only to derive `hasPassword` - the hash itself never
  * leaves this function, so it can't leak into a payload or a page.
  */
 export async function listOwnerClips(ownerToken: string): Promise<LibraryClip[]> {

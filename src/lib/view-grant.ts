@@ -5,7 +5,7 @@ import { signValue, verifySignedValue } from './identity';
  * A short-lived "this viewer cleared the password" grant for one public,
  * password-protected clip. After a correct POST /api/clips/[id]/unlock, the
  * browser carries a signed, httpOnly cookie scoped to that single clip id; the
- * stream/download gate honors it. It is NOT an ownership token — it only proves
+ * stream/download gate honors it. It is NOT an ownership token - it only proves
  * the password was entered, and it can't open private clips or any other clip.
  *
  * Per-clip cookie (`wip_view_<id>`) so each grant carries its own TTL, capped at

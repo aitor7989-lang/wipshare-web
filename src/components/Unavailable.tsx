@@ -7,7 +7,7 @@ type Props = {
 };
 
 /**
- * The calm "no longer available" state — shared by expired/removed clips and the
+ * The calm "no longer available" state - shared by expired/removed clips and the
  * not-found page. Never the default framework error.
  */
 export function Unavailable({

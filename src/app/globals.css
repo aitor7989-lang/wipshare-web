@@ -43,7 +43,7 @@ body {
 
 /* Honor the OS "reduce motion" setting: decorative animation/transitions
  * collapse to near-instant. JS-driven progress (upload/recording bars) still
- * updates the DOM — it just isn't eased. */
+ * updates the DOM - it just isn't eased. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -58,7 +58,7 @@ body {
 /* ── Styled player fullscreen ───────────────────────────────────────────────
  * The player fullscreens its WRAPPER (.wip-player) so the custom control bar
  * comes along. When the wrapper is the fullscreen element, fill the screen and
- * let the video stage grow — otherwise the browser centers the normal-sized
+ * let the video stage grow - otherwise the browser centers the normal-sized
  * card on a black screen. !important overrides the per-clip inline aspect-ratio
  * / max-height on the stage. Prefixed selectors are split into their own rules
  * so a browser that doesn't know one selector still applies the other. */

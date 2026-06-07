@@ -19,7 +19,7 @@ export function CopyLinkCard({ url, display }: Props) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1400);
     } catch {
-      // Clipboard blocked (insecure context / permissions) — leave the card as-is.
+      // Clipboard blocked (insecure context / permissions) - leave the card as-is.
     }
   };
 

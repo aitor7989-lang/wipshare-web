@@ -20,7 +20,7 @@ type Params = { id: string };
  *
  *   404 unknown/not-ready   410 expired   403 not allowed
  *
- * Non-JSON responses don't use the ok/err envelope — the redirect Location
+ * Non-JSON responses don't use the ok/err envelope - the redirect Location
  * header IS the response payload, and the status code carries the rest.
  */
 export async function GET(

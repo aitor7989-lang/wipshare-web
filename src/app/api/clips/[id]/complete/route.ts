@@ -79,7 +79,7 @@ export async function POST(
   }
 
   // Best-effort thumbnail: if we expected one, confirm it actually landed.
-  // A missing thumbnail must NOT fail the clip — we just clear the key so the
+  // A missing thumbnail must NOT fail the clip - we just clear the key so the
   // viewer falls back to the static OG image.
   if (row.thumbR2Key !== null) {
     const thumbHead = await headObject(row.thumbR2Key);

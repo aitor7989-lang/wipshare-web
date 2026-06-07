@@ -9,14 +9,14 @@ import { type ClipCardData } from '@/components/ClipCard';
 import { LibraryGrid } from '@/components/LibraryGrid';
 
 export const metadata: Metadata = {
-  title: 'Your clips — WipShare',
+  title: 'Your clips - WipShare',
   description: 'Clips saved on this device.',
 };
 
 const deviceTag = (
   <span
     className="inline-flex h-[30px] items-center gap-2 rounded-full border border-hairline bg-surface py-0 pl-2 pr-2.5 text-[13px] font-medium text-fg-2"
-    title="No account — clips are recognized by a cookie on this device"
+    title="No account - clips are recognized by a cookie on this device"
   >
     <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border border-hairline bg-surface-2" aria-hidden>
       <svg viewBox="0 0 12 12" fill="none" className="h-3 w-3">
@@ -91,7 +91,7 @@ export default async function MyClipsPage() {
             </svg>
             <h2 className="text-xl font-medium tracking-[-0.02em] text-fg">No clips yet</h2>
             <p className="max-w-[42ch] text-sm leading-relaxed text-fg-2">
-              Clips you capture from this device show up here automatically — no sign-in. Press the hotkey to make your first one.
+              Clips you capture from this device show up here automatically - no sign-in. Press the hotkey to make your first one.
             </p>
             <div className="mt-1 inline-flex items-center gap-2.5 rounded-lg border border-hairline bg-surface px-3.5 py-2.5">
               <span className="font-mono text-[11px] uppercase tracking-wide text-fg-3">capture</span>

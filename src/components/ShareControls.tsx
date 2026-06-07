@@ -10,7 +10,7 @@ type Props = {
   initialHasPassword: boolean;
   /** The canonical share URL (always the plain /c/[id]). */
   shareUrl: string;
-  /** e.g. "Expires in 6 days" — shown in the popover footer. */
+  /** e.g. "Expires in 6 days" - shown in the popover footer. */
   expiryLabel?: string | null;
 };
 
@@ -18,11 +18,11 @@ type PatchResult = { visibility: Visibility; hasPassword: boolean };
 
 /**
  * Owner-only sharing controls (viewer.html share popover). A capsule shows the
- * current state — Public / Password / Private — and opens a popover with:
+ * current state - Public / Password / Private - and opens a popover with:
  *   • "Anyone with the link" public/private toggle  → PATCH { visibility }
  *   • "Password protect" toggle + field             → PATCH { password }
  * Updates are optimistic and reconciled from the PATCH response (revert on
- * failure). Private supersedes — the password control is disabled and cleared
+ * failure). Private supersedes - the password control is disabled and cleared
  * when private. Authorization is enforced server-side; this is just the UI.
  *
  * (Per this phase's brief, the design's Embed dialog and GIF download are out of
@@ -87,7 +87,7 @@ export function ShareControls({ clipId, initialVisibility, initialHasPassword, s
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
-    // closePop closes over draft/passwordOn/visibility/hasPassword — re-bind when they change.
+    // closePop closes over draft/passwordOn/visibility/hasPassword - re-bind when they change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, draft, passwordOn, visibility, hasPassword]);
 
@@ -149,7 +149,7 @@ export function ShareControls({ clipId, initialVisibility, initialHasPassword, s
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1400);
     } catch {
-      // clipboard blocked — no-op
+      // clipboard blocked - no-op
     }
   }
 

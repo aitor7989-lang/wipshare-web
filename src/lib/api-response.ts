@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 /**
- * Canonical response envelopes. All API routes go through these — no raw
+ * Canonical response envelopes. All API routes go through these - no raw
  * NextResponse.json calls anywhere else in the codebase.
  *
  *   ok(data)             → 200 { data: T }

@@ -8,7 +8,7 @@ import { env } from './env';
  * the browser by setting a signed `wip_uid` cookie; thereafter the browser is
  * treated as the owner of any clip whose owner_token matches the cookie.
  *
- * SECURITY MODEL (alpha): owner_token is a bearer capability — whoever holds it
+ * SECURITY MODEL (alpha): owner_token is a bearer capability - whoever holds it
  * can manage that device's clips. It is signed in the cookie (so it can't be
  * forged) but it is NOT a secret password: it travels in the bridge URL
  * (/r/[id]?o=token), which is acceptable for the alpha. Real accounts land later.
@@ -18,7 +18,7 @@ import { env } from './env';
 
 export const OWNER_COOKIE = 'wip_uid';
 
-// 8 days — slightly longer than the 7-day clip TTL so a clip is still "yours"
+// 8 days - slightly longer than the 7-day clip TTL so a clip is still "yours"
 // right up to the moment it expires.
 export const OWNER_COOKIE_MAX_AGE_SECONDS = 8 * 24 * 60 * 60;
 
@@ -72,7 +72,7 @@ export function isPlausibleToken(token: string): boolean {
 /**
  * Reads + verifies the wip_uid cookie and returns the owner_token, or null when
  * absent/tampered. Use this for every ownership check (viewer branch, library
- * scope, rename/delete authorization) — never trust an owner identity from the
+ * scope, rename/delete authorization) - never trust an owner identity from the
  * client request body or query.
  */
 export async function getOwnerToken(): Promise<string | null> {

@@ -4,7 +4,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
  * Clip view-passwords. Hashed with scrypt (memory-hard) and a per-password
  * random salt, stored as `salt:hash` (both hex). This is deliberately NOT the
  * HMAC used for cookie signing: a password is a low-entropy human secret, so it
- * needs a slow, salted KDF — not a fast keyed hash.
+ * needs a slow, salted KDF - not a fast keyed hash.
  *
  * scryptSync blocks briefly (~tens of ms) which is fine for the low-traffic,
  * rate-limited /unlock path. The stored hash never leaves the server.

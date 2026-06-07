@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const imageH = hasThumb ? h : 630;
 
   return {
-    title: `${title} — WipShare`,
+    title: `${title} - WipShare`,
     description,
     openGraph: {
       type: 'video.other',
@@ -115,7 +115,7 @@ export default async function ClipViewerPage({ params }: Props) {
     return <Unavailable />;
   }
 
-  // Ownership decided server-side from the signed cookie — owner-only controls
+  // Ownership decided server-side from the signed cookie - owner-only controls
   // never reach a non-owner.
   const owner = await getOwnerToken();
   const isOwner = clip.ownerToken !== null && owner !== null && owner === clip.ownerToken;

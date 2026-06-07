@@ -14,7 +14,7 @@ type Params = { id: string };
 
 // Every field optional; at least one must be present. `title` renames;
 // `visibility` flips public/private; `password` sets (non-empty) or clears
-// ('' | null) the view password. Private supersedes — a private clip never
+// ('' | null) the view password. Private supersedes - a private clip never
 // carries a password (the UI disables the password control when private).
 const patchSchema = z
   .object({
@@ -28,7 +28,7 @@ const patchSchema = z
 
 /**
  * True when the verified wip_uid cookie owns this clip. Ownership is decided
- * server-side from the signed cookie — never trusted from the request body/query.
+ * server-side from the signed cookie - never trusted from the request body/query.
  */
 async function isOwner(clipOwnerToken: string | null): Promise<boolean> {
   if (clipOwnerToken === null) return false;
@@ -36,7 +36,7 @@ async function isOwner(clipOwnerToken: string | null): Promise<boolean> {
   return owner !== null && owner === clipOwnerToken;
 }
 
-/** PATCH /api/clips/[id] — owner-only rename and/or visibility + password. */
+/** PATCH /api/clips/[id] - owner-only rename and/or visibility + password. */
 export async function PATCH(req: Request, { params }: { params: Promise<Params> }): Promise<Response> {
   const { id } = await params;
   if (!isValidClipId(id)) return err('not_found', 'clip not found', 404);
@@ -109,7 +109,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
   }
 
   // Echo the resolved state so the client can reconcile its optimistic update.
-  // Never return password_hash — only whether one is set.
+  // Never return password_hash - only whether one is set.
   const finalHasPassword =
     nextVisibility === 'public'
       ? updates.passwordHash !== undefined
@@ -125,7 +125,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<Params> 
   });
 }
 
-/** DELETE /api/clips/[id] — owner-only. Removes the R2 mp4 + thumb and the row. */
+/** DELETE /api/clips/[id] - owner-only. Removes the R2 mp4 + thumb and the row. */
 export async function DELETE(_req: Request, { params }: { params: Promise<Params> }): Promise<Response> {
   const { id } = await params;
   if (!isValidClipId(id)) return err('not_found', 'clip not found', 404);

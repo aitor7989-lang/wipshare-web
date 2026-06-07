@@ -11,7 +11,7 @@ type Params = { id: string };
 /**
  * GET /api/clips/[id]/thumb
  *
- * Public — no auth. Unlike /stream (a 302 to a presigned, expiring R2 URL),
+ * Public - no auth. Unlike /stream (a 302 to a presigned, expiring R2 URL),
  * this PROXIES the thumbnail bytes back directly. Thumbnails are tiny, and a
  * stable non-expiring URL is what link-preview crawlers (Slack, Discord) need
  * for og:image. 404 if the clip isn't ready or has no thumbnail.

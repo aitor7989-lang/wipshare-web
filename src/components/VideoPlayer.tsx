@@ -16,7 +16,7 @@ function fmt(s: number): string {
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-/* Cross-browser fullscreen — Safari/iOS still need the webkit-prefixed API and
+/* Cross-browser fullscreen - Safari/iOS still need the webkit-prefixed API and
  * event. We fullscreen the styled WRAPPER (not the bare <video>) so the custom
  * control bar comes along; the `:fullscreen` CSS in globals.css resizes it. */
 type FullscreenDoc = Document & {
@@ -83,7 +83,7 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
 
     // Auto-play once the clip is buffered enough to play through. Browsers block
     // autoplay *with sound* without a prior user gesture, so attempt sound first
-    // and fall back to muted (always permitted) — the user can unmute. Runs once.
+    // and fall back to muted (always permitted) - the user can unmute. Runs once.
     let autoplayed = false;
     const tryAutoplay = () => {
       if (autoplayed) return;
@@ -91,7 +91,7 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
       void v.play().catch(() => {
         v.muted = true;
         void v.play().catch(() => {
-          // Still blocked — leave it paused; the Play button works.
+          // Still blocked - leave it paused; the Play button works.
         });
       });
     };
@@ -107,7 +107,7 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
     v.addEventListener('canplaythrough', tryAutoplay);
 
     // If the clip was already buffered before this effect attached (cache/fast
-    // network), the canplay event may have fired already — kick it off directly.
+    // network), the canplay event may have fired already - kick it off directly.
     if (v.readyState >= 3) tryAutoplay();
 
     return () => {

@@ -10,7 +10,7 @@ export const runtime = 'nodejs';
  *
  * First-run check: the desktop client posts the invite code the user pasted and
  * we confirm it matches WIPSHARE_UPLOAD_SECRET (constant-time). The code IS the
- * shared upload secret in this alpha — verifying it here lets the client store
+ * shared upload secret in this alpha - verifying it here lets the client store
  * it (in Windows Credential Manager) and use it as the bearer token thereafter.
  *
  * Body: { code: string }

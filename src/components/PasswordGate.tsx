@@ -41,7 +41,7 @@ export function PasswordGate({ clipId }: Props) {
       }
       setError(
         res.status === 429
-          ? 'Too many tries — wait a minute and try again.'
+          ? 'Too many tries - wait a minute and try again.'
           : "That password didn't work. Try again.",
       );
       setShaking(true);

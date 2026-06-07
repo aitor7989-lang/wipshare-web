@@ -60,7 +60,7 @@ export async function GET(_req: Request, { params }: { params: Promise<Params> }
     return new Response('Gone', { status: 410 });
   }
 
-  // Same gate as /stream — a private clip (or a passworded one without a valid
+  // Same gate as /stream - a private clip (or a passworded one without a valid
   // view grant) can't be downloaded by a non-owner, even via a direct URL.
   if (!(await canReadClipBytes(row, id))) {
     return new Response('Forbidden', { status: 403 });

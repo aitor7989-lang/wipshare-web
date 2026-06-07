@@ -7,7 +7,7 @@ type Props = {
   url: string;
 };
 
-/** Visitor "Copy link" ghost button — copies the share URL with a flash. */
+/** Visitor "Copy link" ghost button - copies the share URL with a flash. */
 export function CopyLinkButton({ url }: Props) {
   const [copied, setCopied] = useState(false);
 
@@ -17,7 +17,7 @@ export function CopyLinkButton({ url }: Props) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1400);
     } catch {
-      // Clipboard blocked (insecure context / permissions) — no-op.
+      // Clipboard blocked (insecure context / permissions) - no-op.
     }
   };
 

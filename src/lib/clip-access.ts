@@ -8,7 +8,7 @@ export type ClipAccessInput = {
 };
 
 /**
- * Single source of truth for "may this request read the clip's bytes" — used by
+ * Single source of truth for "may this request read the clip's bytes" - used by
  * both /stream and /download so they can never drift. Returns true to allow,
  * false to deny (403). Not-ready (404) and expiry (410) are checked separately
  * by the caller.
