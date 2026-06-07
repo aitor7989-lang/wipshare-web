@@ -36,6 +36,7 @@ export function ShareControls({ clipId, initialVisibility, initialHasPassword, s
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const passInputRef = useRef<HTMLInputElement>(null);
@@ -62,12 +63,13 @@ export function ShareControls({ clipId, initialVisibility, initialHasPassword, s
     setBusy(true);
     const data = await patch({ password: pw });
     setBusy(false);
-    if (data) setHasPassword(data.hasPassword);
+    if (data) {
+      setHasPassword(data.hasPassword);
+      setJustSaved(true);
+    }
   }
 
   function closePop() {
-    // Flush a typed-but-unsubmitted password so closing doesn't silently drop it.
-    if (passwordOn && visibility === 'public' && draft.trim().length > 0) void commitPassword();
     setOpen(false);
   }
 
@@ -99,6 +101,7 @@ export function ShareControls({ clipId, initialVisibility, initialHasPassword, s
       setPasswordOn(false);
       setHasPassword(false);
       setDraft('');
+      setJustSaved(false);
     }
     setBusy(true);
     const data = await patch({ visibility: next });
@@ -124,6 +127,7 @@ export function ShareControls({ clipId, initialVisibility, initialHasPassword, s
     // Turning the password off → clear it.
     setPasswordOn(false);
     setDraft('');
+    setJustSaved(false);
     if (hasPassword) {
       const prev = hasPassword;
       setHasPassword(false);
@@ -156,6 +160,14 @@ export function ShareControls({ clipId, initialVisibility, initialHasPassword, s
       : hasPassword
         ? { background: 'var(--color-accent)', boxShadow: '0 0 0 3px var(--color-accent-dim)' }
         : { background: 'var(--color-ok)', boxShadow: '0 0 0 3px rgba(63,185,80,0.14)' };
+
+  const draftTrimmed = draft.trim();
+  const passwordSet = justSaved || (hasPassword && draftTrimmed.length === 0);
+  const passHint = passwordSet
+    ? 'Password set · required to watch.'
+    : hasPassword && draftTrimmed.length > 0
+      ? 'Press Update to change the password.'
+      : 'Anyone with the link will need this to watch.';
 
   return (
     <div ref={wrapRef} className="relative">
@@ -190,7 +202,7 @@ export function ShareControls({ clipId, initialVisibility, initialHasPassword, s
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="text-[13px] font-medium text-fg">Anyone with the link</span>
                 <span className="text-xs text-fg-3">
-                  {visibility === 'public' ? 'Public — no sign-in needed' : 'Only you can open this link'}
+                  {visibility === 'public' ? 'Public · no sign-in needed' : 'Only you can open this link'}
                 </span>
               </div>
               <Toggle on={visibility === 'public'} onToggle={onToggleVisibility} label="Make clip public" />
@@ -211,23 +223,46 @@ export function ShareControls({ clipId, initialVisibility, initialHasPassword, s
 
             {visibility === 'public' && passwordOn ? (
               <div className="px-2.5 pb-2">
-                <input
-                  ref={passInputRef}
-                  type="text"
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      void commitPassword();
-                    }
-                  }}
-                  onBlur={() => void commitPassword()}
-                  placeholder={hasPassword ? 'Password set — type to change' : 'Set a password'}
-                  aria-label="Clip password"
-                  className="h-8 w-full rounded-md border border-hairline bg-bg px-2.5 font-mono text-[13px] text-fg outline-none transition-colors focus:border-accent"
-                  autoComplete="off"
-                />
+                <div className="flex items-center gap-1.5">
+                  <input
+                    ref={passInputRef}
+                    type="text"
+                    value={draft}
+                    onChange={(e) => {
+                      setDraft(e.target.value);
+                      if (justSaved) setJustSaved(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && draftTrimmed) {
+                        e.preventDefault();
+                        void commitPassword();
+                      }
+                    }}
+                    placeholder="Set a password"
+                    aria-label="Clip password"
+                    className="h-8 min-w-0 flex-1 rounded-md border border-hairline bg-bg px-2.5 font-mono text-[13px] text-fg outline-none transition-colors focus:border-accent"
+                    autoComplete="off"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void commitPassword()}
+                    disabled={!draftTrimmed || busy || justSaved}
+                    className={`h-8 shrink-0 rounded-md border px-3 text-xs font-medium text-white transition-colors disabled:cursor-default disabled:opacity-40 ${
+                      justSaved ? 'border-ok bg-ok' : 'border-accent bg-accent hover:border-accent-hi hover:bg-accent-hi'
+                    }`}
+                    style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)' }}
+                  >
+                    {justSaved || !hasPassword ? 'Set' : 'Update'}
+                  </button>
+                </div>
+                <div className={`mt-1.5 flex min-h-[14px] items-center gap-1.5 text-[11px] ${passwordSet ? 'text-ok' : 'text-fg-3'}`}>
+                  {passwordSet ? (
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 shrink-0" aria-hidden>
+                      <path d="M3 8.5l3.5 3.5L13 4.5" />
+                    </svg>
+                  ) : null}
+                  <span>{passHint}</span>
+                </div>
               </div>
             ) : null}
           </div>
