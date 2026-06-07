@@ -16,9 +16,33 @@ function fmt(s: number): string {
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
+/* Cross-browser fullscreen — Safari/iOS still need the webkit-prefixed API and
+ * event. We fullscreen the styled WRAPPER (not the bare <video>) so the custom
+ * control bar comes along; the `:fullscreen` CSS in globals.css resizes it. */
+type FullscreenDoc = Document & {
+  webkitFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => void;
+};
+type FullscreenEl = HTMLElement & {
+  webkitRequestFullscreen?: () => void;
+};
+function currentFullscreenElement(): Element | null {
+  return document.fullscreenElement ?? (document as FullscreenDoc).webkitFullscreenElement ?? null;
+}
+function requestFullscreenOn(el: HTMLElement): void {
+  const e = el as FullscreenEl;
+  if (e.requestFullscreen) void e.requestFullscreen();
+  else if (e.webkitRequestFullscreen) e.webkitRequestFullscreen();
+}
+function exitFullscreenNow(): void {
+  const d = document as FullscreenDoc;
+  if (document.exitFullscreen) void document.exitFullscreen();
+  else if (d.webkitExitFullscreen) d.webkitExitFullscreen();
+}
+
 /**
  * Styled player over a native <video>, driven via the media element API.
- * Keyboard: Space (play/pause), ←/→ (seek ∓2s), M (mute), F (fullscreen).
+ * Keyboard: Space (play/pause), ←/→ (seek ∓2s), M (mute), L (loop), F (fullscreen).
  * The scrubber shows played + buffered ranges. The box is reserved at the clip's
  * real aspect ratio (no layout shift, no 16:9 letterboxing); a calm placeholder
  * shows until loadedmetadata.
@@ -35,6 +59,8 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
   const [duration, setDuration] = useState(0);
   const [bufferedFrac, setBufferedFrac] = useState(0);
   const [ready, setReady] = useState(false);
+  const [loop, setLoop] = useState(true); // loop on by default (matches design)
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -96,6 +122,19 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
     };
   }, []);
 
+  // Keep the fullscreen button + styling in sync even when the user leaves
+  // fullscreen via Esc or the browser chrome (not just our button). Covers the
+  // webkit-prefixed event for Safari.
+  useEffect(() => {
+    const sync = () => setIsFullscreen(currentFullscreenElement() === cardRef.current);
+    document.addEventListener('fullscreenchange', sync);
+    document.addEventListener('webkitfullscreenchange', sync);
+    return () => {
+      document.removeEventListener('fullscreenchange', sync);
+      document.removeEventListener('webkitfullscreenchange', sync);
+    };
+  }, []);
+
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -119,9 +158,11 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
   const toggleFullscreen = useCallback(() => {
     const el = cardRef.current;
     if (!el) return;
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void el.requestFullscreen?.();
+    if (currentFullscreenElement()) exitFullscreenNow();
+    else requestFullscreenOn(el);
   }, []);
+
+  const toggleLoop = useCallback(() => setLoop((prev) => !prev), []);
 
   const seekToClient = useCallback((clientX: number) => {
     const v = videoRef.current;
@@ -153,6 +194,11 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
           e.preventDefault();
           toggleMute();
           break;
+        case 'l':
+        case 'L':
+          e.preventDefault();
+          toggleLoop();
+          break;
         case 'f':
         case 'F':
           e.preventDefault();
@@ -162,7 +208,7 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
           break;
       }
     },
-    [togglePlay, seekBy, toggleMute, toggleFullscreen],
+    [togglePlay, seekBy, toggleMute, toggleLoop, toggleFullscreen],
   );
 
   const playedFrac = duration > 0 ? Math.min(1, current / duration) : 0;
@@ -170,13 +216,13 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
   return (
     <section
       ref={cardRef}
-      className="relative rounded-xl border border-hairline bg-surface p-3 outline-none"
+      className="wip-player relative rounded-xl border border-hairline bg-surface p-3 outline-none"
       aria-label="Clip player"
       tabIndex={0}
       onKeyDown={onKeyDown}
     >
       <div
-        className={`relative w-full overflow-hidden rounded-[7px] border border-hairline bg-black${aspect ? '' : ' aspect-video'}`}
+        className={`wip-stage relative w-full overflow-hidden rounded-[7px] border border-hairline bg-black${aspect ? '' : ' aspect-video'}`}
         style={aspect ? { aspectRatio: aspect, maxHeight: '80vh' } : undefined}
       >
         <video
@@ -184,6 +230,7 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
           className="block h-full w-full object-contain"
           preload="auto"
           playsInline
+          loop={loop}
           poster={poster}
           onClick={togglePlay}
         >
@@ -279,6 +326,21 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
         <div className="flex items-center gap-1.5 text-fg">
           <button
             type="button"
+            onClick={toggleLoop}
+            aria-label="Loop"
+            aria-pressed={loop}
+            title="Loop · L"
+            className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${loop ? 'bg-accent-dim text-accent-hi hover:bg-[rgba(94,106,210,0.22)]' : 'hover:bg-surface-2'}`}
+          >
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+              <path d="M4 5h6a3 3 0 0 1 3 3a3 3 0 0 1-.5 1.7" />
+              <path d="M12 11H6a3 3 0 0 1-3-3a3 3 0 0 1 .5-1.7" />
+              <path d="M4 3 2.5 5 4 7" />
+              <path d="M12 13l1.5-2L12 9" />
+            </svg>
+          </button>
+          <button
+            type="button"
             onClick={toggleMute}
             aria-label={muted ? 'Unmute' : 'Mute'}
             title={muted ? 'Unmute · M' : 'Mute · M'}
@@ -300,8 +362,9 @@ export function VideoPlayer({ src, poster, width, height }: Props) {
           <button
             type="button"
             onClick={toggleFullscreen}
-            aria-label="Fullscreen"
-            title="Fullscreen · F"
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            aria-pressed={isFullscreen}
+            title={isFullscreen ? 'Exit fullscreen · F' : 'Fullscreen · F'}
             className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-surface-2"
           >
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
