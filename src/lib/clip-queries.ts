@@ -1,6 +1,6 @@
 import { and, desc, eq, gt } from 'drizzle-orm';
 import { db } from './db';
-import { clips } from './schema';
+import { clips, type ClipVisibility } from './schema';
 
 export type LibraryClip = {
   id: string;
@@ -10,14 +10,18 @@ export type LibraryClip = {
   width: number | null;
   height: number | null;
   thumbR2Key: string | null;
+  visibility: ClipVisibility;
+  hasPassword: boolean;
 };
 
 /**
  * An owner's ready, non-expired clips, newest first. Shared by GET /api/me/clips
- * and the server-rendered /me page so both apply identical scoping.
+ * and the server-rendered /me page so both apply identical scoping. The clip's
+ * password_hash is read only to derive `hasPassword` — the hash itself never
+ * leaves this function, so it can't leak into a payload or a page.
  */
 export async function listOwnerClips(ownerToken: string): Promise<LibraryClip[]> {
-  return db
+  const rows = await db
     .select({
       id: clips.id,
       title: clips.title,
@@ -26,6 +30,8 @@ export async function listOwnerClips(ownerToken: string): Promise<LibraryClip[]>
       width: clips.width,
       height: clips.height,
       thumbR2Key: clips.thumbR2Key,
+      visibility: clips.visibility,
+      passwordHash: clips.passwordHash,
     })
     .from(clips)
     .where(
@@ -37,4 +43,16 @@ export async function listOwnerClips(ownerToken: string): Promise<LibraryClip[]>
     )
     .orderBy(desc(clips.createdAt))
     .limit(200);
+
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    createdAt: r.createdAt,
+    expiresAt: r.expiresAt,
+    width: r.width,
+    height: r.height,
+    thumbR2Key: r.thumbR2Key,
+    visibility: r.visibility,
+    hasPassword: r.passwordHash !== null,
+  }));
 }

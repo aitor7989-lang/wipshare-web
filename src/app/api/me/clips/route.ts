@@ -28,6 +28,8 @@ export async function GET(): Promise<Response> {
       height: r.height,
       thumbUrl: r.thumbR2Key ? `/api/clips/${r.id}/thumb` : null,
       viewerUrl: `/c/${r.id}`,
+      visibility: r.visibility,
+      hasPassword: r.hasPassword,
     }));
     return ok({ clips: data }, NO_STORE);
   } catch (e) {
