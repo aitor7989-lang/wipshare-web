@@ -190,7 +190,7 @@ export default async function ClipViewerPage({ params }: Props) {
   );
 
   return (
-    <SiteFrame headerRight={headerRight} footer={!isOwner}>
+    <SiteFrame headerRight={headerRight}>
       <main className="flex flex-1 flex-col items-center px-6 pb-8 pt-14">
         <div className="flex w-full max-w-[1080px] flex-col gap-5">
           {/* crumbs */}

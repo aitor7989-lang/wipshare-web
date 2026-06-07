@@ -4,16 +4,14 @@ import Link from 'next/link';
 type Props = {
   /** Right-hand header slot (e.g. "Your clips" link or a "shared with you" tag). */
   headerRight?: ReactNode;
-  /** Show the "Made with WipShare" footer (the visitor + unavailable surfaces). */
-  footer?: boolean;
   children: ReactNode;
 };
 
 /**
- * Shared page chrome for the web surfaces: the top-origin grey wash, the
- * wordmark header (with a right slot), and the optional conversion footer.
+ * Shared page chrome for the web surfaces: the top-origin grey wash and the
+ * wordmark header (with a right slot).
  */
-export function SiteFrame({ headerRight, footer = false, children }: Props) {
+export function SiteFrame({ headerRight, children }: Props) {
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden">
       <div
@@ -37,20 +35,6 @@ export function SiteFrame({ headerRight, footer = false, children }: Props) {
         </header>
 
         {children}
-
-        {footer ? (
-          <footer className="flex items-center justify-center border-t border-hairline px-6 py-[18px] text-xs text-fg-3">
-            <span className="inline-flex items-center gap-2 font-mono tracking-[0.02em]">
-              <span className="relative h-3 w-3 rounded-[3px] bg-accent">
-                <span className="absolute right-[3px] top-[3px] h-1 w-1 rounded-full bg-bg" />
-              </span>
-              Made with{' '}
-              <Link href="/" className="text-fg-2 hover:text-fg">
-                WipShare
-              </Link>
-            </span>
-          </footer>
-        ) : null}
       </div>
     </div>
   );

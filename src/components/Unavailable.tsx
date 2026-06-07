@@ -15,7 +15,7 @@ export function Unavailable({
   sub = 'Links expire after a week. This one may have run out, or the owner removed it.',
 }: Props) {
   return (
-    <SiteFrame footer>
+    <SiteFrame>
       <main className="flex flex-1 flex-col items-center px-6">
         <div className="my-[4vh] flex w-[min(94vw,440px)] flex-col items-center text-center">
           <div
