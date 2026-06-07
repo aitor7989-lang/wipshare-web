@@ -22,8 +22,12 @@ export const r2 = new S3Client({
   },
 });
 
-const PUT_TTL_SECONDS = 60 * 15;          // 15 minutes for client to upload
-const GET_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days for viewer playback
+const PUT_TTL_SECONDS = 60 * 15; // 15 minutes for client to upload
+// Short-lived on purpose: /stream and /download run a server-side access check
+// and only then mint a presign good for ~2 minutes, so a leaked redirect URL
+// stops working almost immediately. Clips are small, so this comfortably covers
+// a play; a reload re-checks access and mints a fresh URL.
+const GET_TTL_SECONDS = 120;
 
 export async function presignPut(
   key: string,
