@@ -16,6 +16,8 @@ import { CopyLinkCard } from '@/components/CopyLinkCard';
 import { CopyLinkButton } from '@/components/CopyLinkButton';
 import { ClipTitleEditable } from '@/components/ClipTitleEditable';
 import { DeleteClipControl } from '@/components/DeleteClipControl';
+import { PasswordGate } from '@/components/PasswordGate';
+import { hasViewGrant } from '@/lib/view-grant';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -116,6 +118,24 @@ export default async function ClipViewerPage({ params }: Props) {
   // never reach a non-owner.
   const owner = await getOwnerToken();
   const isOwner = clip.ownerToken !== null && owner !== null && owner === clip.ownerToken;
+
+  // Access states for non-owners (the owner always sees the full view, whatever
+  // the visibility). Never leak the clip body or its owner_token here.
+  if (!isOwner) {
+    if (clip.visibility === 'private') {
+      return (
+        <Unavailable
+          title="This clip is private"
+          sub="The person who made it hasn't shared it publicly. Ask them for a link if you think you should have access."
+        />
+      );
+    }
+    // Public + password: only viewers who've cleared the gate (a valid signed
+    // view-grant cookie) get the player; everyone else gets the gate.
+    if (clip.passwordHash !== null && !(await hasViewGrant(id))) {
+      return <PasswordGate clipId={id} />;
+    }
+  }
 
   const base = env.NEXT_PUBLIC_BASE_URL;
   const shareUrl = `${base}/c/${id}`;
